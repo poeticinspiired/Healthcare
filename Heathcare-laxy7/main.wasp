@@ -1,0 +1,87 @@
+app Heathcare {
+  wasp: {
+    version: "^0.11.1"
+  },
+  title: "Analyzing Patient Outcomes and Hospital Performance",
+  client: {
+    rootComponent: import { Layout } from "@client/Layout.jsx"
+  },
+  db: {
+    prisma: {
+      clientPreviewFeatures: ["extendedWhereUnique"]
+    }
+  },
+  auth: {
+    userEntity: User,
+    methods: {
+      usernameAndPassword: {}
+    },
+    onAuthFailedRedirectTo: "/login",
+    onAuthSucceededRedirectTo: "/"
+  },
+}
+
+route LoginRoute { path: "/login", to: LoginPage }
+page LoginPage {
+  component: import Login from "@client/pages/auth/Login.jsx"
+}
+route SignupRoute { path: "/signup", to: SignupPage }
+page SignupPage {
+  component: import Signup from "@client/pages/auth/Signup.jsx"
+}
+
+entity User {=psl
+    id         Int         @id @default(autoincrement())
+    username   String      @unique
+    password   String
+    admissions Admission[]
+psl=}
+
+entity Admission {=psl
+    id                       Int    @id @default(autoincrement())
+    userId                   Int
+    hospitalName             String
+    admissionDate            String
+    releaseDate              String
+    admissionType            String
+    primaryDiagnosis         String
+    coMorbidities            String
+    mortalityRate            Float
+    readmissionRate          Float
+    patientSatisfactionScore Float
+    user                     User   @relation(fields: [userId], references: [id])
+psl=}
+
+entity Hospital {=psl
+    id                      Int    @id @default(autoincrement())
+    name                    String @unique
+    infectionRate           Float
+    complicationRate        Float
+    resourceUtilizationRate Float
+psl=}
+
+action createAdmission {
+  fn: import { createAdmission } from "@server/actions.js",
+  entities: [Admission]
+}
+
+action updateAdmission {
+  fn: import { updateAdmission } from "@server/actions.js",
+  entities: [Admission]
+}
+
+query getAdmissionById {
+  fn: import { getAdmissionById } from "@server/queries.js",
+  entities: [Admission]
+}
+
+query getHospitalByName {
+  fn: import { getHospitalByName } from "@server/queries.js",
+  entities: [Hospital]
+}
+
+route DashboardRoute { path: "/", to: DashboardPage }
+page DashboardPage {
+  component: import { DashboardPage } from "@client/pages/Dashboard.jsx",
+  authRequired: true
+}
